@@ -234,11 +234,20 @@ COutBitsStream & operator <<(COutBitsStream & bs, const CGoldQuantity & v) {
 
 //struct CPropertyList
 
-CInBitsStream & operator >>(CInBitsStream & bs, CPropertyList & v) {
+CInBitsStream& operator >>(CInBitsStream& bs, CPropertyList& v) {
 	for (bs >> bits(v.iEndFlag, 9); bs.Good() && v.iEndFlag < 0x1FF; bs >> bits(v.iEndFlag, 9)) {
 		const int b = ::theApp.PropertyMetaData(v.iEndFlag).Bits();
-		if (b > 0)
-			bs >> bits(v.mProperty.emplace_back(v.iEndFlag, 0).second, b);
+
+		if (b > 0) {
+			v.mProperty.emplace_back(v.iEndFlag, 0);
+			//注意, 必须用 auto&, 否则会复制一个新的对象到 last 变量.
+			auto& last = v.mProperty.back();
+			auto x = bits(last.second, b);
+			bs >> x;
+		}
+
+		/*if (b > 0)
+			bs >> bits(v.mProperty.emplace_back(v.iEndFlag, 0).second, b);*/
 	}
 	return bs;
 }
